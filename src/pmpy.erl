@@ -16,7 +16,6 @@ endpoint( Id ) ->
 	case ets:lookup( pmpy_endpoints, Id ) of
 		[] -> 
 			{ ok, Pid } = pmpy_sup:start_endpoint( Id ),
-			gen_event:add_handler( Pid, echohandler, [ "Endpoint ", Id, " received" ] ),
 			ets:insert( pmpy_endpoints, { Id, Pid } ),
 			{ ok, Pid };
 			
