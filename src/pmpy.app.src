@@ -1,0 +1,11 @@
+{ application, pmpy, [
+	{ description, "Push Me Pull You" },
+	{ vsn, "1" },
+	{ registered, [] },
+	{ applications, [
+		kernel,
+		stdlib
+	] },
+	{ mod, { pmpy_app, [] } },
+	{ env, [] }
+] }.
