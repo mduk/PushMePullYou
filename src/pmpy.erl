@@ -12,6 +12,8 @@ stop() ->
 	application:stop( cowboy ),
 	application:stop( sasl ).
 
+% Get the pid of an endpoint. 
+% If the endpoint doesn't exist, it'll be started.
 endpoint( Id ) ->
 	case ets:lookup( pmpy_endpoints, Id ) of
 		[] -> 
@@ -23,14 +25,17 @@ endpoint( Id ) ->
 			{ ok, Pid }
 	end.
 
+% Subscribe to an endpoint
 subscribe( Id ) ->
 	{ ok, Pid } = endpoint( Id ),
 	gen_event:add_handler( Pid, pmpy_subscribe, self() ).
 
+% Unsubscribe from an endpoint
 unsubscribe( Id ) ->
 	{ ok, Pid } = endpoint( Id ),
 	gen_event:remove_handler( Pid, pmpy_subscribe, self() ).
 
+% Send a message to an endpoint, the message gets relayed to all the subscriber processes
 notify( Id, Msg ) ->
 	{ ok, Pid } = endpoint( Id ),
 	gen_event:notify( Pid, Msg ).

@@ -29,13 +29,16 @@ init( { _Any, http }, Req, [] ) ->
 % ==============================================================================
 % handle/2
 % ==============================================================================
-handle( Req, S ) ->
-	{ Path, _ } = cowboy_http_req:raw_path( Req ),
-	cowboy_http_req:reply( 200, [ 
-		{ <<"Content-Type">>, <<"application/json">> } 
-	], <<"{ status: \"ok\", path: \"", Path/binary, "\" }">>, Req ),
-	{ ok, Req, S }.
-	
+handle( Req, State ) ->
+	{ Method, _ } = cowboy_http_req:method( Req ),
+	{ FullPath, _ } = cowboy_http_req:raw_path( Req ),
+	case binary:split( FullPath, <<".">> ) of
+		[ Path ] -> 
+			serve( Method, Path, undefined, Req, State );
+		[ Path, Extension ] ->
+			_ = { ico, subscribe, unsubscribe }, % Just defining some atoms
+			serve( Method, Path, binary_to_existing_atom( Extension, utf8 ), Req, State )
+	end.
 
 % ==============================================================================
 % terminate/2
@@ -91,4 +94,30 @@ websocket_terminate( _Reason, Req, _State ) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Private functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+% serve/5
+%===============================================================================
+% Push a message over http to an endpoint
+%-------------------------------------------------------------------------------
+serve( 'POST', Endpoint, undefined, Req, State ) ->
+	{ ok, Body, _ } = cowboy_http_req:body( Req ),
+	pmpy:notify( Endpoint, Body ),
+	cowboy_http_req:reply( 200, [ 
+		{ <<"Content-Type">>, <<"text/plain">> } 
+	], <<"ok">>, Req ),
+	{ ok, Req, State };
+%-------------------------------------------------------------------------------
+% Get the last message sent to an endpoint
+%-------------------------------------------------------------------------------
+serve( 'GET', Endpoint, undefined, Req, State ) ->
+	cowboy_http_req:reply( 501, [ 
+		{ <<"Content-Type">>, <<"text/plain">> } 
+	], <<"501 - ain't nobody got time for ", Endpoint/binary>>, Req ),
+	{ ok, Req, State };
+%-------------------------------------------------------------------------------
+% Catch all requests
+%-------------------------------------------------------------------------------
+serve( _, _, _, Req, State ) ->
+	cowboy_http_req:reply( 404, [ 
+		{ <<"Content-Type">>, <<"text/plain">> } 
+	], <<"404 : ", Endpoint/binary">>, Req ),
+	{ ok, Req, State }.
