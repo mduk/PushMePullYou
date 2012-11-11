@@ -34,10 +34,9 @@ handle( Req, State ) ->
 	{ FullPath, _ } = cowboy_http_req:raw_path( Req ),
 	case binary:split( FullPath, <<".">> ) of
 		[ Path ] -> 
-			serve( Method, Path, undefined, Req, State );
+			serve( Method, Path, <<"">>, Req, State );
 		[ Path, Extension ] ->
-			_ = { ico, subscribe, unsubscribe }, % Just defining some atoms
-			serve( Method, Path, binary_to_existing_atom( Extension, utf8 ), Req, State )
+			serve( Method, Path, Extension, Req, State )
 	end.
 
 % ==============================================================================
@@ -64,8 +63,7 @@ websocket_init( _, Req, [] ) ->
 % ==============================================================================
 websocket_handle( { text, Msg }, Req, State ) ->
 	{ Path, _ } = cowboy_http_req:raw_path( Req ),
-	Decoded = mochijson2:decode( Msg ),
-	pmpy:notify( Path, Decoded ),
+	pmpy:notify( Path, Msg ),
 	{ ok, Req, State, hibernate };
 % ==============================================================================
 % Catch all websocket messages
@@ -79,7 +77,7 @@ websocket_handle( _, Req, S ) ->
 % Catch all messages
 %-------------------------------------------------------------------------------
 websocket_info( Msg, Req, State ) ->
-	{ reply, { text, mochijson2:encode( Msg ) }, Req, State, hibernate }.
+	{ reply, { text, Msg }, Req, State, hibernate }.
 
 %===============================================================================
 % websocket_terminate/3
@@ -98,7 +96,7 @@ websocket_terminate( _Reason, Req, _State ) ->
 %===============================================================================
 % Push a message over http to an endpoint
 %-------------------------------------------------------------------------------
-serve( 'POST', Endpoint, undefined, Req, State ) ->
+serve( 'POST', Endpoint, <<"">>, Req, State ) ->
 	{ ok, Body, _ } = cowboy_http_req:body( Req ),
 	pmpy:notify( Endpoint, Body ),
 	cowboy_http_req:reply( 200, [ 
@@ -108,11 +106,11 @@ serve( 'POST', Endpoint, undefined, Req, State ) ->
 %-------------------------------------------------------------------------------
 % Get the last message sent to an endpoint
 %-------------------------------------------------------------------------------
-serve( 'GET', Endpoint, undefined, Req, State ) ->
-	{ ok, Pid } = pmpy:endpoint( Endpoint ),
-	cowboy_http_req:reply( 501, [ 
+serve( 'GET', Endpoint, _, Req, State ) ->
+	Message = pmpy:get_latest( Endpoint ),
+	cowboy_http_req:reply( 200, [ 
 		{ <<"Content-Type">>, <<"text/plain">> } 
-	], pmpy_endpoint:get_latest( Pid ), Req ),
+	], Message, Req ),
 	{ ok, Req, State };
 %-------------------------------------------------------------------------------
 % Catch all requests
