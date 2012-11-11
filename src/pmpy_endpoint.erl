@@ -33,14 +33,14 @@ handle_call( _, _, S ) ->
 	{ reply, { error, unknown_call }, S }.
 
 handle_cast( { notify, Message }, S ) ->
-	gen_event:notify( S#state.event_manager, S ),
+	gen_event:notify( S#state.event_manager, Message ),
 	S2 = S#state{ messages = [ Message | S#state.messages ] },
 	{ noreply, S2 };
 handle_cast( { subscribe, Pid }, S ) ->
 	gen_event:add_handler( S#state.event_manager, pmpy_subscribe, Pid ),
 	{ noreply, S };
 handle_cast( { unsubscribe, Pid }, S ) ->
-	gen_event:remove_handler( S#state.event_manager, pmpy_subscribe, Pid ),
+	gen_event:delete_handler( S#state.event_manager, pmpy_subscribe, Pid ),
 	{ noreply, S };
 handle_cast( _, S ) -> 
 	{ noreply, S }.
