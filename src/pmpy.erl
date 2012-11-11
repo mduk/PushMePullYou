@@ -1,6 +1,6 @@
 -module( pmpy ).
 
--export( [ start/0, stop/0, endpoint/1, subscribe/1, unsubscribe/1, notify/2 ] ).
+-export( [ start/0, stop/0, endpoint/1, subscribe/1, unsubscribe/1, notify/2, get_latest/1 ] ).
 
 start() ->
 	application:start( sasl ),
@@ -39,3 +39,8 @@ unsubscribe( Id ) ->
 notify( Id, Msg ) ->
 	{ ok, Pid } = endpoint( Id ),
 	pmpy_endpoint:notify( Pid, Msg ).
+
+% Get the last message sent to an endpoint
+get_latest( Id ) ->
+	{ ok, Pid } = endpoint( Id ),
+	pmpy_endpoint:get_latest( Pid ).
