@@ -9,7 +9,7 @@ start_link() ->
 	supervisor:start_link( { local, ?MODULE }, ?MODULE, [] ).
 
 start_endpoint( Id ) -> 
-	ChildSpec = { Id, { gen_event, start_link, [] }, permanent, 5000, worker, [ gen_event ] },
+	ChildSpec = { Id, { pmpy_endpoint, start_link, [] }, permanent, 5000, worker, [ pmpy_endpoint ] },
 	supervisor:start_child( ?MODULE, ChildSpec ).
 
 init( _ ) ->

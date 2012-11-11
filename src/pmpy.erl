@@ -28,14 +28,14 @@ endpoint( Id ) ->
 % Subscribe to an endpoint
 subscribe( Id ) ->
 	{ ok, Pid } = endpoint( Id ),
-	gen_event:add_handler( Pid, pmpy_subscribe, self() ).
+	pmpy_endpoint:subscribe( Pid ).
 
 % Unsubscribe from an endpoint
 unsubscribe( Id ) ->
 	{ ok, Pid } = endpoint( Id ),
-	gen_event:remove_handler( Pid, pmpy_subscribe, self() ).
+	pmpy_endpoint:unsubscribe( Pid ).
 
 % Send a message to an endpoint, the message gets relayed to all the subscriber processes
 notify( Id, Msg ) ->
 	{ ok, Pid } = endpoint( Id ),
-	gen_event:notify( Pid, Msg ).
+	pmpy_endpoint:notify( Pid, Msg ).

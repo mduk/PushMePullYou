@@ -109,9 +109,10 @@ serve( 'POST', Endpoint, undefined, Req, State ) ->
 % Get the last message sent to an endpoint
 %-------------------------------------------------------------------------------
 serve( 'GET', Endpoint, undefined, Req, State ) ->
+	{ ok, Pid } = pmpy:endpoint( Endpoint ),
 	cowboy_http_req:reply( 501, [ 
 		{ <<"Content-Type">>, <<"text/plain">> } 
-	], <<"501 - ain't nobody got time for ", Endpoint/binary>>, Req ),
+	], pmpy_endpoint:get_latest( Pid ), Req ),
 	{ ok, Req, State };
 %-------------------------------------------------------------------------------
 % Catch all requests
@@ -119,5 +120,5 @@ serve( 'GET', Endpoint, undefined, Req, State ) ->
 serve( _, _, _, Req, State ) ->
 	cowboy_http_req:reply( 404, [ 
 		{ <<"Content-Type">>, <<"text/plain">> } 
-	], <<"404 : ", Endpoint/binary">>, Req ),
+	], <<"404">>, Req ),
 	{ ok, Req, State }.
