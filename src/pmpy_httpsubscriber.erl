@@ -20,7 +20,7 @@
 -behaviour( gen_server ).
 -export( [ init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3 ] ).
 
--export( [ start_link/2, unsubscribe/2 ] ).
+-export( [ start_link/2, subscribe/2, unsubscribe/2, stop/2 ] ).
 
 -record( state, { token, url } ).
 
@@ -31,10 +31,22 @@ start_link( Token, Url ) ->
 	gen_server:start_link( ?MODULE, { Token, Url }, [] ).
 	
 %===============================================================================
+% Subscribe
+%===============================================================================
+subscribe( Pid, EndpointId ) ->
+	gen_server:cast( Pid, { subscribe, EndpointId } ).
+
+%===============================================================================
 % Unsubscribe
 %===============================================================================
-unsubscribe( Pid, Token ) ->
-	gen_server:call( Pid, { unsubscribe, Token } ).
+unsubscribe( Pid, EndpointId ) ->
+	gen_server:cast( Pid, { unsubscribe, EndpointId } ).
+
+%===============================================================================
+% Stop
+%===============================================================================
+stop( Pid, Token ) ->
+	gen_server:call( Pid, { stop, Token } ).
 	
 %===============================================================================
 % Initialise
@@ -63,14 +75,26 @@ handle_call( _, _, S ) ->
 %===============================================================================
 % Handle Cast
 %===============================================================================
-% Attempt unsubscribe with valid token
+% Subscribe to an endpoint
 %-------------------------------------------------------------------------------
-handle_cast( { unsubscribe, Token }, S = #state{ token = Token } ) ->
+handle_cast( { subscribe, EndpointId }, S ) ->
+	pmpy:subscribe( EndpointId ),
+	{ noreply, S };
+%-------------------------------------------------------------------------------
+% Unsubscribe from an endpoint
+%-------------------------------------------------------------------------------
+handle_cast( { unsubscribe, EndpointId }, S ) ->
+	pmpy:unsubscribe( EndpointId ),
+	{ noreply, S };
+%-------------------------------------------------------------------------------
+% Stop with valid token
+%-------------------------------------------------------------------------------
+handle_cast( { stop, Token }, S = #state{ token = Token } ) ->
 	{ stop, unsubscribe, S };
 %-------------------------------------------------------------------------------
-% Attempt unsubscribe with invalid token
+% Stop with invalid token
 %-------------------------------------------------------------------------------
-handle_cast( { unsubscribe, _ }, S ) ->
+handle_cast( { stop, _ }, S ) ->
 	{ noreply, S };
 %-------------------------------------------------------------------------------
 % Catch all
