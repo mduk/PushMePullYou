@@ -109,11 +109,13 @@ websocket_terminate( _Reason, Req, _State ) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Private functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%===============================================================================
 % serve/5
 %===============================================================================
 % Push a message over http to an endpoint
 %-------------------------------------------------------------------------------
-serve( 'POST', Endpoint, <<"">>, Req, State ) ->
+serve( 'POST', Endpoint, <<>>, Req, State ) ->
 	{ ok, Body, _ } = cowboy_http_req:body( Req ),
 	pmpy:notify( Endpoint, Body ),
 	cowboy_http_req:reply( 200, [ 
@@ -123,11 +125,49 @@ serve( 'POST', Endpoint, <<"">>, Req, State ) ->
 %-------------------------------------------------------------------------------
 % Get the last message sent to an endpoint
 %-------------------------------------------------------------------------------
-serve( 'GET', Endpoint, _, Req, State ) ->
+serve( 'GET', Endpoint, <<>>, Req, State ) ->
 	Message = pmpy:get_latest( Endpoint ),
 	cowboy_http_req:reply( 200, [ 
 		{ <<"Content-Type">>, <<"text/plain">> } 
 	], Message, Req ),
+	{ ok, Req, State };
+%-------------------------------------------------------------------------------
+% HTTP subscribe to an endpoint
+%-------------------------------------------------------------------------------
+serve( 'POST', Endpoint, <<"subscribe">>, Req, State ) ->
+	{ PostData, _ } = cowboy_http_req:body_qs( Req ),
+	
+	true = proplists:is_defined( <<"token">>, PostData ),
+	true = proplists:is_defined( <<"url">>, PostData ),
+	
+	Token = proplists:get_value( <<"token">>, PostData ),
+	Url = proplists:get_value( <<"url">>, PostData ),
+	
+	{ ok, Pid } = pmpy:httpsubscriber( Token, Url ),
+	pmpy_httpsubscriber:subscribe( Pid, Endpoint ),
+	
+	cowboy_http_req:reply( 200, [ 
+		{ <<"Content-Type">>, <<"text/plain">> } 
+	], <<"ok">>, Req ),
+	{ ok, Req, State };
+%-------------------------------------------------------------------------------
+% HTTP subscribe to an endpoint
+%-------------------------------------------------------------------------------
+serve( 'POST', Endpoint, <<"unsubscribe">>, Req, State ) ->
+	{ PostData, _ } = cowboy_http_req:body_qs( Req ),
+	
+	true = proplists:is_defined( <<"token">>, PostData ),
+	true = proplists:is_defined( <<"url">>, PostData ),
+	
+	Token = proplists:get_value( <<"token">>, PostData ),
+	Url = proplists:get_value( <<"url">>, PostData ),
+	
+	{ ok, Pid } = pmpy:httpsubscriber( Token, Url ),
+	pmpy_httpsubscriber:unsubscribe( Pid, Endpoint ),
+	
+	cowboy_http_req:reply( 200, [ 
+		{ <<"Content-Type">>, <<"text/plain">> } 
+	], <<"ok">>, Req ),
 	{ ok, Req, State };
 %-------------------------------------------------------------------------------
 % Catch all requests
