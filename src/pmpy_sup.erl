@@ -20,14 +20,57 @@
 -behaviour( supervisor ).
 -export( [ init/1 ] ).
 
--export( [ start_link/0, start_endpoint/1 ] ).
+-export( [ start_link/0, start_endpoint/1, start_httpsubscriber/2, get_httpsubscriber/2, get_httpsubscriber/3 ] ).
 
+%===============================================================================
+% Start Link
+%===============================================================================
 start_link() ->
 	supervisor:start_link( { local, ?MODULE }, ?MODULE, [] ).
 
+%===============================================================================
+% Start Endpoint
+%===============================================================================
 start_endpoint( Id ) -> 
-	ChildSpec = { Id, { pmpy_endpoint, start_link, [] }, permanent, 5000, worker, [ pmpy_endpoint ] },
+	Mfa = { pmpy_endpoint, start_link, [] },
+	ChildSpec = { Id, Mfa, permanent, 5000, worker, [ pmpy_endpoint ] },
 	supervisor:start_child( ?MODULE, ChildSpec ).
 
+%===============================================================================
+% Start HTTP Subscriber
+%===============================================================================
+start_httpsubscriber( Token, Url ) ->
+	Mfa = { pmpy_httpsubscriber, start_link, [ Token, Url ] },
+	ChildSpec = { { Token, Url }, Mfa, permanent, 5000, worker, [ pmpy_httpsubscriber ] },
+	supervisor:start_child( ?MODULE, ChildSpec ).
+
+%===============================================================================
+% Get HTTP Subscriber
+%===============================================================================
+get_httpsubscriber( Token, Url ) ->
+	Children = supervisor:which_children( ?MODULE ),
+	case proplists:lookup( { Token, Url }, Children ) of
+		none ->
+			none;
+		{ { Token, Url }, Pid, _, _ } ->
+			Pid
+	end.
+
+%===============================================================================
+% Initialise
+%===============================================================================
 init( _ ) ->
 	{ ok, { { one_for_one, 5, 10 }, [] } }.
+
+%===============================================================================
+% Get HTTP Subscriber
+%===============================================================================
+% Found it!
+%-------------------------------------------------------------------------------
+get_httpsubscriber( Token, Url, [ { { Token, Url }, Pid, _, _ } | _ ] ) ->
+	Pid;
+%-------------------------------------------------------------------------------
+% Recursing...
+%-------------------------------------------------------------------------------
+get_httpsubscriber( Token, Url, [ _ | Tail ] ) ->
+	get_httpsubscriber( Token, Url, Tail ).

@@ -17,7 +17,16 @@
 
 -module( pmpy ).
 
--export( [ start/0, stop/0, endpoint/1, subscribe/1, unsubscribe/1, notify/2, get_latest/1 ] ).
+-export( [ 
+	start/0, 
+	stop/0, 
+	endpoint/1, 
+	httpsubscriber/2,
+	subscribe/1, 
+	unsubscribe/1, 
+	notify/2, 
+	get_latest/1 
+] ).
 
 start() ->
 	application:start( sasl ),
@@ -39,6 +48,16 @@ endpoint( Id ) ->
 			{ ok, Pid };
 			
 		[ { Id, Pid } ] -> 
+			{ ok, Pid }
+	end.
+
+% Get the pid of a HTTP subscriber.
+% If the subscriber doesn't exist, it'll be started.
+httpsubscriber( Token, Url ) ->
+	case pmpy_sup:get_httpsubscriber( Token, Url ) of
+		none ->
+			pmpy_sup:start_httpsubscriber( Token, Url );
+		Pid ->
 			{ ok, Pid }
 	end.
 
