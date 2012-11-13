@@ -20,9 +20,9 @@
 -behaviour( gen_server ).
 -export( [ init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3 ] ).
 
--export( [ start_link/2, subscribe/2, unsubscribe/2, stop/2 ] ).
+-export( [ start_link/2, subscribe/2, unsubscribe/2 ] ).
 
--record( state, { token, url } ).
+-record( state, { token, url, subscriptions = [] } ).
 
 %===============================================================================
 % Start Link
@@ -41,12 +41,6 @@ subscribe( Pid, EndpointId ) ->
 %===============================================================================
 unsubscribe( Pid, EndpointId ) ->
 	gen_server:cast( Pid, { unsubscribe, EndpointId } ).
-
-%===============================================================================
-% Stop
-%===============================================================================
-stop( Pid, Token ) ->
-	gen_server:call( Pid, { stop, Token } ).
 	
 %===============================================================================
 % Initialise
@@ -79,18 +73,19 @@ handle_call( _, _, S ) ->
 %-------------------------------------------------------------------------------
 handle_cast( { subscribe, EndpointId }, S ) ->
 	pmpy:subscribe( EndpointId ),
-	{ noreply, S };
+	{ noreply, S#state{ subscriptions = [ EndpointId | S#state.subscriptions ] } };
 %-------------------------------------------------------------------------------
 % Unsubscribe from an endpoint
 %-------------------------------------------------------------------------------
 handle_cast( { unsubscribe, EndpointId }, S ) ->
 	pmpy:unsubscribe( EndpointId ),
-	{ noreply, S };
-%-------------------------------------------------------------------------------
-% Stop with valid token
-%-------------------------------------------------------------------------------
-handle_cast( { stop, Token }, S = #state{ token = Token } ) ->
-	{ stop, unsubscribe, S };
+	
+	case lists:delete( EndpointId, S#state.subscriptions ) of
+		[] ->
+			{ stop, no_subscriptions, S#state{ subscriptions = [] } };
+		Subscriptions ->
+			{ noreply, S#state{ subscriptions = Subscriptions } }
+	end;
 %-------------------------------------------------------------------------------
 % Stop with invalid token
 %-------------------------------------------------------------------------------
