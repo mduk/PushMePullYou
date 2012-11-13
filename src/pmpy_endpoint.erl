@@ -22,7 +22,7 @@
 
 -export( [ start_link/0, notify/2, get_latest/1, subscribe/1, unsubscribe/1 ] ).
 
--record( state, { event_manager, messages = [] } ).
+-record( state, { event_manager, last_message = undefined } ).
 
 start_link() ->
 	gen_server:start_link( ?MODULE, [], [] ).
@@ -44,15 +44,13 @@ init( _ ) ->
 	{ ok, #state{ event_manager = Pid } }.
 
 handle_call( get_latest, _, S ) -> 
-	[ Message | _ ] = S#state.messages,
-	{ reply, Message, S };
+	{ reply, S#state.last_message, S };
 handle_call( _, _, S ) -> 
 	{ reply, { error, unknown_call }, S }.
 
 handle_cast( { notify, Message }, S ) ->
 	gen_event:notify( S#state.event_manager, Message ),
-	S2 = S#state{ messages = [ Message | S#state.messages ] },
-	{ noreply, S2 };
+	{ noreply, S#state{ last_message = Message } };
 handle_cast( { subscribe, Pid }, S ) ->
 	gen_event:add_handler( S#state.event_manager, pmpy_subscribe, Pid ),
 	{ noreply, S };
