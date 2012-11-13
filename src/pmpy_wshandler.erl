@@ -135,17 +135,7 @@ serve( 'GET', Endpoint, <<>>, Req, State ) ->
 % HTTP subscribe to an endpoint
 %-------------------------------------------------------------------------------
 serve( 'POST', Endpoint, <<"subscribe">>, Req, State ) ->
-	{ PostData, _ } = cowboy_http_req:body_qs( Req ),
-	
-	true = proplists:is_defined( <<"token">>, PostData ),
-	true = proplists:is_defined( <<"url">>, PostData ),
-	
-	Token = proplists:get_value( <<"token">>, PostData ),
-	Url = proplists:get_value( <<"url">>, PostData ),
-	
-	{ ok, Pid } = pmpy:httpsubscriber( Token, Url ),
-	pmpy_httpsubscriber:subscribe( Pid, Endpoint ),
-	
+	http_subscription( subscribe, Endpoint, Req ),
 	cowboy_http_req:reply( 200, [ 
 		{ <<"Content-Type">>, <<"text/plain">> } 
 	], <<"ok">>, Req ),
@@ -154,17 +144,7 @@ serve( 'POST', Endpoint, <<"subscribe">>, Req, State ) ->
 % HTTP subscribe to an endpoint
 %-------------------------------------------------------------------------------
 serve( 'POST', Endpoint, <<"unsubscribe">>, Req, State ) ->
-	{ PostData, _ } = cowboy_http_req:body_qs( Req ),
-	
-	true = proplists:is_defined( <<"token">>, PostData ),
-	true = proplists:is_defined( <<"url">>, PostData ),
-	
-	Token = proplists:get_value( <<"token">>, PostData ),
-	Url = proplists:get_value( <<"url">>, PostData ),
-	
-	{ ok, Pid } = pmpy:httpsubscriber( Token, Url ),
-	pmpy_httpsubscriber:unsubscribe( Pid, Endpoint ),
-	
+	http_subscription( unsubscribe, Endpoint, Req ),
 	cowboy_http_req:reply( 200, [ 
 		{ <<"Content-Type">>, <<"text/plain">> } 
 	], <<"ok">>, Req ),
@@ -177,3 +157,18 @@ serve( _, _, _, Req, State ) ->
 		{ <<"Content-Type">>, <<"text/plain">> } 
 	], <<"404">>, Req ),
 	{ ok, Req, State }.
+
+%===============================================================================
+% http_subscription/3
+%
+% Extracts parameters from the request body and either subscribe to an
+% endpoint or unsubscribe from one.
+%===============================================================================
+http_subscription( Function, Endpoint, Req ) ->
+	{ PostData, _ } = cowboy_http_req:body_qs( Req ),
+	true = proplists:is_defined( <<"token">>, PostData ),
+	true = proplists:is_defined( <<"url">>, PostData ),
+	Token = proplists:get_value( <<"token">>, PostData ),
+	Url = proplists:get_value( <<"url">>, PostData ),
+	{ ok, Pid } = pmpy:httpsubscriber( Token, Url ),
+	pmpy_httpsubscriber:Function( Pid, Endpoint ).
