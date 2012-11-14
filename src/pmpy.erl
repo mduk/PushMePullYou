@@ -19,7 +19,6 @@
 
 -export( [ 
 	start/0, 
-	stop/0, 
 	endpoint/1, 
 	httpsubscriber/2,
 	subscribe/1, 
@@ -32,11 +31,6 @@ start() ->
 	application:start( sasl ),
 	application:start( cowboy ),
 	application:start( pmpy ).
-
-stop() ->
-	application:stop( pmpy ),
-	application:stop( cowboy ),
-	application:stop( sasl ).
 
 % Get the pid of an endpoint. 
 % If the endpoint doesn't exist, it'll be started.
