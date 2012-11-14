@@ -48,10 +48,14 @@ endpoint( Id ) ->
 % Get the pid of a HTTP subscriber.
 % If the subscriber doesn't exist, it'll be started.
 httpsubscriber( Token, Url ) ->
-	case pmpy_sup:get_httpsubscriber( Token, Url ) of
-		none ->
-			pmpy_sup:start_httpsubscriber( Token, Url );
-		Pid ->
+	Id = { Token, Url },
+	case ets:lookup( pmpy_httpsubscribers, Id ) of
+		[] ->
+			{ ok, Pid } = pmpy_sup:start_httpsubscriber( Token, Url ),
+			ets:insert( pmpy_httpsubscribers, { Id, Pid } ),
+			{ ok, Pid };
+			
+		[ { Id, Pid } ] ->
 			{ ok, Pid }
 	end.
 

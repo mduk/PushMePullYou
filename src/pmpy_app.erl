@@ -23,6 +23,7 @@
 start( _StartType, _StartArgs ) ->
 	start_cowboy(),
 	ets:new( pmpy_endpoints, [ public, named_table ] ),
+	ets:new( pmpy_httpsubscribers, [ public, named_table ] ),
 	pmpy_sup:start_link().
 
 stop( _State ) ->
