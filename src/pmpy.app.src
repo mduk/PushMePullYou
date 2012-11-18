@@ -24,5 +24,7 @@
 		stdlib
 	] },
 	{ mod, { pmpy_app, [] } },
-	{ env, [] }
+	{ env, [
+		{ port, 8000 }
+	] }
 ] }.
