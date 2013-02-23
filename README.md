@@ -15,9 +15,7 @@ Currently the build is left to rebar so you'll have to have that installed.
 	rebar get-deps
 	rebar compile
 
-Starting Push Me Pull You is simple. 
-If you want to start it, run <code>./start.sh</code>. 
-You can work out the rest of the controls for yourself.
+Starting Push Me Pull You is simple. If you want to start it run <code>./start.sh</code>, you can work out the rest of the controls for yourself. To paraphrase a certain [infullable computer](http://en.wikipedia.org/wiki/Red_Dwarf).
 
 ### WebSockets
 
@@ -52,7 +50,7 @@ You can a message to a bus over HTTP simply by POSTing it straight to the bus UR
 
 ### HTTP Subscribers
 
-There are two "methods" as such on every endpoint, <code>subscribe</code> and <code>unsubscribe</code>.
+There are two "methods" as such on every bus, <code>subscribe</code> and <code>unsubscribe</code>.
 
 #### Request Parameters
 
@@ -61,11 +59,11 @@ There are two "methods" as such on every endpoint, <code>subscribe</code> and <c
 
 #### Subscribe
 	
-	curl --data "token=mytoken&url=http://localhost/" http://localhost:80/foo.subscribe
+	curl --data "token=mytoken&url=http://localhost/" http://localhost:8000/foo.subscribe
 
 #### Unsubscribe
 
-	curl --data "token=mytoken&url=http://localhost/" http://localhost:80/foo.unsubscribe
+	curl --data "token=mytoken&url=http://localhost/" http://localhost:8000/foo.unsubscribe
 
 ## License
 
