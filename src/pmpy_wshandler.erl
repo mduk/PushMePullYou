@@ -153,9 +153,9 @@ serve( 'POST', Endpoint, <<"unsubscribe">>, Req, State ) ->
 % Catch all requests
 %-------------------------------------------------------------------------------
 serve( _, _, _, Req, State ) ->
-	cowboy_http_req:reply( 404, [ 
+	cowboy_http_req:reply( 405, [ 
 		{ <<"Content-Type">>, <<"text/plain">> } 
-	], <<"404">>, Req ),
+	], <<"405 Method Not Allowed">>, Req ),
 	{ ok, Req, State }.
 
 %===============================================================================
