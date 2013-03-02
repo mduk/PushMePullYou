@@ -20,12 +20,12 @@
 -behaviour( gen_server ).
 -export( [ init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3 ] ).
 
--export( [ start_link/0, notify/2, get_latest/1, subscribe/1, unsubscribe/1 ] ).
+-export( [ start_link/1, notify/2, get_latest/1, subscribe/1, unsubscribe/1 ] ).
 
--record( state, { event_manager, last_message = undefined } ).
+-record( state, { event_manager, name, last_message = undefined } ).
 
-start_link() ->
-	gen_server:start_link( ?MODULE, [], [] ).
+start_link( Name ) ->
+	gen_server:start_link( ?MODULE, Name, [] ).
 
 subscribe( Pid ) ->
 	gen_server:cast( Pid, { subscribe, self() } ).
@@ -39,9 +39,12 @@ notify( Pid, Message ) ->
 get_latest( Pid ) ->
 	gen_server:call( Pid, get_latest ).
 
-init( _ ) -> 
+init( Name ) -> 
 	{ ok, Pid } = gen_event:start_link(),
-	{ ok, #state{ event_manager = Pid } }.
+	{ ok, #state{ 
+		event_manager = Pid, 
+		name = Name 
+	} }.
 
 handle_call( get_latest, _, S ) -> 
 	{ reply, S#state.last_message, S };
@@ -49,7 +52,7 @@ handle_call( _, _, S ) ->
 	{ reply, { error, unknown_call }, S }.
 
 handle_cast( { notify, Message }, S ) ->
-	gen_event:notify( S#state.event_manager, Message ),
+	gen_event:notify( S#state.event_manager, { S#state.name, Message } ),
 	{ noreply, S#state{ last_message = Message } };
 handle_cast( { subscribe, Pid }, S ) ->
 	gen_event:add_handler( S#state.event_manager, pmpy_subscribe, Pid ),

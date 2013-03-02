@@ -32,7 +32,7 @@ start_link() ->
 % Start Endpoint
 %===============================================================================
 start_endpoint( Id ) -> 
-	Mfa = { pmpy_endpoint, start_link, [] },
+	Mfa = { pmpy_endpoint, start_link, [ Id ] },
 	ChildSpec = { Id, Mfa, permanent, 5000, worker, [ pmpy_endpoint ] },
 	supervisor:start_child( ?MODULE, ChildSpec ).
 

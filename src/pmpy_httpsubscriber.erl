@@ -102,7 +102,7 @@ handle_cast( _, S ) ->
 %===============================================================================
 % POST message to url
 %-------------------------------------------------------------------------------
-handle_info( Event, State ) when is_binary( Event ) ->
+handle_info( { Bus, Event }, State ) when is_binary( Event ) ->
 	Url = case State of
 		#state{ url = Bin } when is_binary( Bin ) ->
 			binary_to_list( Bin );
@@ -111,7 +111,8 @@ handle_info( Event, State ) when is_binary( Event ) ->
 	end,
 	httpc:request( post, { Url, [ 
 		{ "Server", "Push Me Pull You" },
-		{ "X-PMPY-Token", binary_to_list( State#state.token ) }
+		{ "X-PMPY-Token", binary_to_list( State#state.token ) },
+		{ "X-PMPY-Bus", binary_to_list( Bus ) }
 	], "text/plain", Event }, [], [] ),
 	{ noreply, State }.
 
