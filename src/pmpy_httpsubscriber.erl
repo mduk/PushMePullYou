@@ -109,7 +109,10 @@ handle_info( Event, State ) when is_binary( Event ) ->
 		#state{ url = List } when is_list( List ) ->
 			List
 	end,
-	httpc:request( post, { Url, [], "text/plain", Event }, [], [] ),
+	httpc:request( post, { Url, [ 
+		{ "Server", "Push Me Pull You" },
+		{ "X-PMPY-Token", binary_to_list( State#state.token ) }
+	], "text/plain", Event }, [], [] ),
 	{ noreply, State }.
 
 %===============================================================================
