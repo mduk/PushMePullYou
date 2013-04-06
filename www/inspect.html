@@ -1,0 +1,31 @@
+<html>
+
+	<head><title>Inspector</title></head>
+	<body>
+		<script type="text/javascript">
+var ws = new WebSocket(
+	"ws://" +
+	window.location.host +
+	window.location.pathname
+);
+
+ws.onopen = function() {
+	console.log( "Socket Opened" );
+};
+
+ws.onmessage = function( msg ) {
+	console.log( JSON.parse( msg.data ) );
+};
+
+ws.onerror = function( error ) {
+	console.log( "Error: ", error );
+};
+
+ws.onclose = function() {
+	console.log( "Socket Closed" );
+};
+		</script>
+	</body>
+
+</html>
+
