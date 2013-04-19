@@ -1,31 +1,103 @@
 <html>
 
-	<head><title>Inspector</title></head>
-	<body>
+	<head>
+		<title>Inspector</title>
+		<style>
+		
+		pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
+		.string { color: green; }
+		.number { color: darkorange; }
+		.boolean { color: blue; }
+		.null { color: magenta; }
+		.key { color: red; }
+		
+		ul { list-style-type: none; }
+		header { font-weight: bold; }
+		
+		
+		</style>
+		
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 		<script type="text/javascript">
-var ws = new WebSocket(
-	"ws://" +
-	window.location.host +
-	window.location.pathname
-);
+		
+		function isJson( str ) {
+			try {
+				JSON.parse( str );
+				return true;
+			}
+			catch ( e ) {
+				return false;
+			}
+		}
+		
+		function addEntry( header, content ) {
+			$( "#messages" ).prepend( "<li><header>" + header + "</header><pre>" + content + "</pre></li>" );
+		}
+		
+		function syntaxHighlight(json) {
+			json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+			return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+				var cls = 'number';
+				if (/^"/.test(match)) {
+					if (/:$/.test(match)) {
+						cls = 'key';
+					} else {
+						cls = 'string';
+					}
+				} else if (/true|false/.test(match)) {
+					cls = 'boolean';
+				} else if (/null/.test(match)) {
+					cls = 'null';
+				}
+				return '<span class="' + cls + '">' + match + '</span>';
+			});
+		}
+		
+		// Here there be dragons!
+		
+		$( function() {
+		
+			var host = window.location.host;
+			var path = window.location.pathname;
+			var wsUrl = "ws://" + host + path.substr( 0, path.indexOf('.') );
 
-ws.onopen = function() {
-	console.log( "Socket Opened" );
-};
+			console.log( "Connecting to:", wsUrl );
 
-ws.onmessage = function( msg ) {
-	console.log( JSON.parse( msg.data ) );
-};
+			var ws = new WebSocket( wsUrl );
 
-ws.onerror = function( error ) {
-	console.log( "Error: ", error );
-};
+			ws.onopen = function() {
+				console.log( "Socket Opened" );
+			};
 
-ws.onclose = function() {
-	console.log( "Socket Closed" );
-};
+			ws.onmessage = function( msg ) {
+				var data = msg.data;
+				
+				var header = "Received Raw data";
+				var content = data;
+				
+				if ( isJson( data ) ) {
+					data = JSON.stringify( JSON.parse( data ), undefined, 4 );
+					header = "Received JSON data";
+					content = syntaxHighlight( data );
+				}
+				
+				addEntry( header, content );
+				console.log( data );
+			};
+
+			ws.onerror = function( error ) {
+				console.log( "Error: ", error );
+			};
+
+			ws.onclose = function() {
+				console.log( "Socket Closed" );
+			};
+			
+		} );
 		</script>
-	</body>
+	</head>
+	
+	<body><ul id="messages"></ul></body>
 
 </html>
 
