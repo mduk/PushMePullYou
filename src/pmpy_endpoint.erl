@@ -22,7 +22,7 @@
 
 -export( [ start_link/1, notify/2, get_latest/1, subscribe/1, unsubscribe/1 ] ).
 
--record( state, { event_manager, name, last_message = undefined } ).
+-record( state, { event_manager, name, last_message = [] } ).
 
 start_link( Name ) ->
 	gen_server:start_link( ?MODULE, Name, [] ).
